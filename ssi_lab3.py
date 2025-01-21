@@ -1,13 +1,17 @@
 import numpy as np
 
-def manhattan_distance(p1, p2):
-    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
-
-def chebyshev_distance(p1, p2):
-    return max(abs(p1[0] - p2[0]), abs(p1[1] - p2[1]))
 
 def euclidean_distance(p1, p2):
-    return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+    return round(np.sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2), 2)
+
+
+def manhattan_distance(p1, p2):
+    return round(abs(p1[0] - p2[0]) + abs(p1[1] - p2[1]), 2)
+
+
+def chebyshev_distance(p1, p2):
+    return round(max(abs(p1[0] - p2[0]), abs(p1[1] - p2[1])), 2)
+
 
 def calculate_dissimilarity(bitmap_a, bitmap_b, distance_func):
     dissimilarity = 0
@@ -23,12 +27,60 @@ def calculate_dissimilarity(bitmap_a, bitmap_b, distance_func):
 
     return dissimilarity
 
+
 def bidirectional_similarity(bitmap_a, bitmap_b, distance_func):
     dissimilarity_ab = calculate_dissimilarity(bitmap_a, bitmap_b, distance_func)
     dissimilarity_ba = calculate_dissimilarity(bitmap_b, bitmap_a, distance_func)
     return -(dissimilarity_ab + dissimilarity_ba)
 
-znaki_wz = [
+
+def display_bitmap(bitmap):
+    print("=" * 20)
+    print("Bitmap:")
+    for row in bitmap:
+        print(" ".join(str(cell) for cell in row))
+
+
+def shift_bitmap(bitmap, direction, steps):
+    shifted_bitmap = np.zeros_like(bitmap)
+    if direction == 'L':
+        for y in range(bitmap.shape[0]):
+            for x in range(bitmap.shape[1]):
+                shifted_bitmap[y][(x - steps) % bitmap.shape[1]] = bitmap[y][x]
+    elif direction == 'R':
+        for y in range(bitmap.shape[0]):
+            for x in range(bitmap.shape[1]):
+                shifted_bitmap[y][(x + steps) % bitmap.shape[1]] = bitmap[y][x]
+    elif direction == 'U':
+        for y in range(bitmap.shape[0]):
+            for x in range(bitmap.shape[1]):
+                shifted_bitmap[(y - steps) % bitmap.shape[0]][x] = bitmap[y][x]
+    elif direction == 'D':
+        for y in range(bitmap.shape[0]):
+            for x in range(bitmap.shape[1]):
+                shifted_bitmap[(y + steps) % bitmap.shape[0]][x] = bitmap[y][x]
+
+    return shifted_bitmap
+
+
+def generate_report(bitmap, patterns, distance_func, direction, steps):
+    print("Initial bitmap:")
+    display_bitmap(bitmap)
+
+    if direction != "brak":
+        bitmap = shift_bitmap(bitmap, direction, steps)
+        print(f"Shifted bitmap ({direction} by {steps}):")
+        display_bitmap(bitmap)
+
+    print(f"Using distance metric: {distance_func.__name__}")
+    for i, pattern in enumerate(patterns):
+        similarity = bidirectional_similarity(bitmap, pattern, distance_func)
+        print(f"Comparison with pattern {i + 1}:")
+        print(f"Bidirectional similarity: {similarity:.2f}")
+        print("-" * 40)
+
+
+patterns = [
     np.array([
         [0, 0, 0, 1],
         [0, 0, 1, 1],
@@ -52,21 +104,38 @@ znaki_wz = [
     ])
 ]
 
-znaki_tst = [
+test_bitmaps = [
     np.array([
         [0, 0, 0, 0],
         [0, 0, 1, 1],
         [0, 1, 1, 1],
         [0, 0, 0, 1],
         [0, 0, 0, 1]
+    ]),
+    np.array([
+        [1, 1, 1, 1],
+        [0, 0, 0, 1],
+        [1, 1, 1, 1],
+        [0, 0, 1, 1],
+        [1, 1, 1, 1]
+    ]),
+    np.array([
+        [1, 1, 1, 1],
+        [0, 0, 0, 1],
+        [0, 0, 1, 0],
+        [1, 1, 0, 0],
+        [1, 1, 1, 1]
     ])
 ]
 
-results = []
-for i, wz in enumerate(znaki_wz):
-    for metric_name, metric_func in [("Manhattan", manhattan_distance), ("Chebyshev", chebyshev_distance), ("Euclidean", euclidean_distance)]:
-        similarity = bidirectional_similarity(znaki_tst[0], wz, metric_func)
-        results.append((f"znaki_tst[1] vs znaki_wz[{i + 1}]", metric_name, similarity))
+# Zad 1
+# generate_report(test_bitmaps[0], patterns, manhattan_distance, "brak", 0)
+# generate_report(test_bitmaps[0], patterns, euclidean_distance, "brak", 0)
+# generate_report(test_bitmaps[0], patterns, chebyshev_distance, "brak", 0)
 
-for result in results:
-    print(f"Comparison: {result[0]}, Metric: {result[1]}, Similarity: {result[2]:.2f}")
+# Zad 2
+# generate_report(test_bitmaps[0], patterns, euclidean_distance, "L", 1)
+
+# Zad 3
+generate_report(test_bitmaps[1], patterns, euclidean_distance, "brak", 0)
+generate_report(test_bitmaps[2], patterns, euclidean_distance, "brak", 0)
